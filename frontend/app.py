@@ -1,5 +1,5 @@
-from PyQt6.QtWidgets import QApplication, QWidget, QMainWindow, QPushButton, QGridLayout, QLabel, QVBoxLayout
-from PyQt6.QtCore import QPointF, QRectF, QLineF, Qt, QTimer
+from PyQt6.QtWidgets import QApplication, QWidget, QMainWindow, QPushButton, QGridLayout, QLabel, QVBoxLayout, QHBoxLayout
+from PyQt6.QtCore import QPointF, QRectF, QLineF, Qt, QTimer, pyqtSignal
 from PyQt6.QtGui import QPainter, QColor
 import pyqtgraph as pg
 from enum import Enum
@@ -24,10 +24,12 @@ class MainWindow(QMainWindow):
         hstick = HorizontalJoystick()
         sensorData = SensorDisplay()
         sensorGraph = SensorGraph()
+        grip_control = GripControl()
 
         controls = QVBoxLayout()
         controls.addWidget(joystick)
         controls.addWidget(hstick)
+        controls.addWidget(grip_control)
         controls_widget = QWidget()
         controls_widget.setLayout(controls)
 
@@ -158,6 +160,28 @@ class HorizontalJoystick(QWidget):
         # Return normalized horizontal value: -1.0 (left) -> 1.0 (right)
         return self.knobX / self.__maxDistance
 
+class GripControl(QWidget):
+    # Signals to notify button presses
+    openClicked = pyqtSignal()
+    closeClicked = pyqtSignal()
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+
+        # Create buttons
+        self.open_button = QPushButton("Open")
+        self.close_button = QPushButton("Close")
+
+        # Connect buttons to signals
+        self.open_button.clicked.connect(self.openClicked.emit)
+        self.close_button.clicked.connect(self.closeClicked.emit)
+
+        # Layout: horizontal side-by-side
+        layout = QHBoxLayout()
+        layout.addWidget(self.open_button)
+        layout.addWidget(self.close_button)
+        self.setLayout(layout)  
+
 class SensorDisplay(QWidget):
     def __init__(self):
         super().__init__()
@@ -240,10 +264,10 @@ class SensorGraph(QWidget):
         t = time.time() - self.start_time
 
         # Replace these with your actual sensor readings
-        temperature = round(random.uniform(20, 25), 2)
-        pressure = round(random.uniform(1000, 1020), 2)
-        acceleration = round(random.uniform(0, 2), 2)
-        altitude = round(random.uniform(100, 120), 2)
+        temperature = round(random.uniform(20, 22), 2)
+        pressure = round(random.uniform(1000, 1005), 2)
+        acceleration = round(random.uniform(0, .5), 2)
+        altitude = round(random.uniform(100, 102), 2)
 
         # Append new data
         self.timestamps.append(t)
