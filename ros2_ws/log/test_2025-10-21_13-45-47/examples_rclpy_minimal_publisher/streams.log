@@ -1,0 +1,22 @@
+[0.452s] Invoking command in '/home/aaron/abstain-rover/ros2_ws/src/src/examples/rclpy/topics/minimal_publisher': AMENT_PREFIX_PATH=/home/aaron/abstain-rover/ros2_ws/install/examples_rclpy_minimal_publisher:${AMENT_PREFIX_PATH} PS1=[\u@\h \W]\$ PYTEST_ADDOPTS=--tb=short --junit-xml=/home/aaron/abstain-rover/ros2_ws/build/examples_rclpy_minimal_publisher/pytest.xml --junit-prefix=examples_rclpy_minimal_publisher -o cache_dir=/home/aaron/abstain-rover/ros2_ws/build/examples_rclpy_minimal_publisher/.pytest_cache PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=/home/aaron/abstain-rover/ros2_ws/build/examples_rclpy_minimal_publisher:/home/aaron/abstain-rover/ros2_ws/install/examples_rclpy_minimal_publisher/lib/python3.10/site-packages:${PYTHONPATH} /usr/bin/python3 -m pytest
+[1.735s] [1m============================= test session starts ==============================[0m
+[1.735s] platform linux -- Python 3.10.12, pytest-6.2.5, py-1.10.0, pluggy-0.13.0
+[1.735s] cachedir: /home/aaron/abstain-rover/ros2_ws/build/examples_rclpy_minimal_publisher/.pytest_cache
+[1.735s] rootdir: /home/aaron/abstain-rover/ros2_ws/src/src/examples/rclpy, configfile: pytest.ini
+[1.735s] plugins: ament-lint-0.12.14, ament-copyright-0.12.14, ament-flake8-0.12.14, ament-pep257-0.12.14, ament-xmllint-0.12.14, launch-testing-1.0.10, launch-testing-ros-0.19.12, colcon-core-0.20.1, cov-3.0.0
+[1.735s] [1mcollecting ... [0m[1m
+[1.735s] collected 3 items                                                              [0m
+[1.735s] 
+[1.736s] test/test_copyright.py [32m.[0m[32m                                                 [ 33%][0m
+[1.736s] test/test_flake8.py [32m.[0m[33m                                                    [ 66%][0m
+[1.736s] test/test_pep257.py [32m.[0m[33m                                                    [100%][0m
+[1.736s] - generated xml file: /home/aaron/abstain-rover/ros2_ws/build/examples_rclpy_minimal_publisher/pytest.xml -
+[1.736s] [33m======================== [32m3 passed[0m, [33m[1m2 warnings[0m[33m in 0.57s[0m[33m =========================[0m
+[1.736s] 
+[1.736s] [33m=============================== warnings summary ===============================[0m
+[1.736s] topics/minimal_publisher/test/test_flake8.py::test_flake8
+[1.736s] topics/minimal_publisher/test/test_flake8.py::test_flake8
+[1.737s]   Warning: SelectableGroups dict interface is deprecated. Use select.
+[1.737s] 
+[1.737s] -- Docs: https://docs.pytest.org/en/stable/warnings.html
+[1.975s] Invoked command in '/home/aaron/abstain-rover/ros2_ws/src/src/examples/rclpy/topics/minimal_publisher' returned '0': AMENT_PREFIX_PATH=/home/aaron/abstain-rover/ros2_ws/install/examples_rclpy_minimal_publisher:${AMENT_PREFIX_PATH} PS1=[\u@\h \W]\$ PYTEST_ADDOPTS=--tb=short --junit-xml=/home/aaron/abstain-rover/ros2_ws/build/examples_rclpy_minimal_publisher/pytest.xml --junit-prefix=examples_rclpy_minimal_publisher -o cache_dir=/home/aaron/abstain-rover/ros2_ws/build/examples_rclpy_minimal_publisher/.pytest_cache PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=/home/aaron/abstain-rover/ros2_ws/build/examples_rclpy_minimal_publisher:/home/aaron/abstain-rover/ros2_ws/install/examples_rclpy_minimal_publisher/lib/python3.10/site-packages:${PYTHONPATH} /usr/bin/python3 -m pytest
