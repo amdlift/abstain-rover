@@ -12,8 +12,8 @@ public:
   MultiServoPublisher()
   : Node("multi_servo_publisher"),
     base_angle_(0.0f),
-    shoulder_angle_(45.0f),
-    elbow_angle_(90.0f)
+    shoulder_angle_(0.0f),
+    elbow_angle_(0.0f)
   {
     // Create three publishers, one per servo
     base_pub_ = this->create_publisher<std_msgs::msg::Float32>("servo_base", 10);
@@ -25,10 +25,10 @@ public:
       100ms, std::bind(&MultiServoPublisher::base_timer_callback, this));
 
     shoulder_timer_ = this->create_wall_timer(
-      150ms, std::bind(&MultiServoPublisher::shoulder_timer_callback, this));
+      100ms, std::bind(&MultiServoPublisher::shoulder_timer_callback, this));
 
     elbow_timer_ = this->create_wall_timer(
-      200ms, std::bind(&MultiServoPublisher::elbow_timer_callback, this));
+      100ms, std::bind(&MultiServoPublisher::elbow_timer_callback, this));
   }
 
 private:
@@ -39,7 +39,10 @@ private:
     base_pub_->publish(msg);
     RCLCPP_INFO(this->get_logger(), "Base servo: %.2f", msg.data);
     base_angle_ += 1.0f;
-    if (base_angle_ > 180.0f) base_angle_ = 0.0f;
+    if (base_angle_ > 180.0f) {
+      
+      base_angle_ = 0.0f;
+    }
   }
 
   void shoulder_timer_callback()
@@ -48,8 +51,10 @@ private:
     msg.data = shoulder_angle_;
     shoulder_pub_->publish(msg);
     RCLCPP_INFO(this->get_logger(), "Shoulder servo: %.2f", msg.data);
-    shoulder_angle_ += 0.5f;
-    if (shoulder_angle_ > 180.0f) shoulder_angle_ = 45.0f;
+    shoulder_angle_ += 1.0f;
+    if (shoulder_angle_ > 180.0f) {
+      shoulder_angle_ = 0.0f;
+    }
   }
 
   void elbow_timer_callback()
@@ -58,8 +63,10 @@ private:
     msg.data = elbow_angle_;
     elbow_pub_->publish(msg);
     RCLCPP_INFO(this->get_logger(), "Elbow servo: %.2f", msg.data);
-    elbow_angle_ += 0.8f;
-    if (elbow_angle_ > 180.0f) elbow_angle_ = 90.0f;
+    elbow_angle_ += 1.0f;
+    if (elbow_angle_ > 180.0f) {
+      elbow_angle_ = 0.0f;
+    }
   }
 
   // Publishers
