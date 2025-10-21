@@ -7,9 +7,14 @@ endif()
 
 # find dependencies
 find_package(ament_cmake REQUIRED)
-# uncomment the following section in order to fill in
-# further dependencies manually.
-# find_package(<dependency> REQUIRED)
+find_package(rclcpp REQUIRED)
+find_package(std_msgs REQUIRED)
+
+add_executable(talker src/publisher_member_function.cpp)
+ament_target_dependencies(talker rclcpp std_msgs)
+
+add_executable(listener src/subscriber_member_function.cpp)
+ament_target_dependencies(listener rclcpp std_msgs)
 
 add_executable(gs_node src/gs_node.cpp)
 target_include_directories(gs_node PUBLIC
@@ -17,7 +22,10 @@ target_include_directories(gs_node PUBLIC
   $<INSTALL_INTERFACE:include>)
 target_compile_features(gs_node PUBLIC c_std_99 cxx_std_17)  # Require C99 and C++17
 
-install(TARGETS gs_node
+install(TARGETS 
+  gs_node
+  talker
+  listener
   DESTINATION lib/${PROJECT_NAME})
 
 if(BUILD_TESTING)
