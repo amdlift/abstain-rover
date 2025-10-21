@@ -1,1 +1,0 @@
-Invoking command in '/home/aaron/abstain-rover/ros2_ws/build/abstain_pkg': CMAKE_PREFIX_PATH=/opt/ros/humble PS1=[\u@\h \W]\$ /usr/bin/cmake /home/aaron/abstain-rover/ros2_ws/src/abstain_pkg -DCMAKE_INSTALL_PREFIX=/home/aaron/abstain-rover/ros2_ws/install/abstain_pkg

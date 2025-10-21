@@ -1,1 +1,0 @@
-/home/aaron/abstain-rover/ros2_ws/src/src/examples/rclpy/services/minimal_service/setup.py

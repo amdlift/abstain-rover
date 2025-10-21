@@ -7,23 +7,11 @@ endif()
 
 # find dependencies
 find_package(ament_cmake REQUIRED)
-find_package(rclcpp REQUIRED)
-find_package(std_msgs REQUIRED)
 # uncomment the following section in order to fill in
 # further dependencies manually.
 # find_package(<dependency> REQUIRED)
 
 add_executable(gs_node src/gs_node.cpp)
-add_executable(talker src/publisher_member_function.cpp)
-add_executable(listener src/subscriber_member_function.cpp)
-ament_target_dependencies(talker rclcpp std_msgs)
-ament_target_dependencies(listener rclcpp std_msgs)
-
-install(TARGETS
-  talker
-  listener
-  DESTINATION lib/${PROJECT_NAME})
-
 target_include_directories(gs_node PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   $<INSTALL_INTERFACE:include>)

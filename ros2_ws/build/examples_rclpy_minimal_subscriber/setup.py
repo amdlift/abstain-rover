@@ -1,1 +1,0 @@
-/home/aaron/abstain-rover/ros2_ws/src/src/examples/rclpy/topics/minimal_subscriber/setup.py

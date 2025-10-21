@@ -1,1 +1,0 @@
-Invoking command in '/home/aaron/abstain-rover/ros2_ws/build/examples_rclcpp_minimal_timer': CMAKE_PREFIX_PATH=/opt/ros/humble PS1=[\u@\h \W]\$ /usr/bin/cmake /home/aaron/abstain-rover/ros2_ws/src/examples/rclcpp/timers/minimal_timer -DCMAKE_INSTALL_PREFIX=/home/aaron/abstain-rover/ros2_ws/install/examples_rclcpp_minimal_timer

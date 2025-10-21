@@ -1,4 +1,0 @@
-Invoking command in '/home/aaron/abstain-rover/ros2_ws/build/abstain_pkg': CMAKE_PREFIX_PATH=/opt/ros/humble PS1=[\u@\h \W]\$ /usr/bin/cmake --build /home/aaron/abstain-rover/ros2_ws/build/abstain_pkg -- -j16 -l16
-Invoked command in '/home/aaron/abstain-rover/ros2_ws/build/abstain_pkg' returned '0': CMAKE_PREFIX_PATH=/opt/ros/humble PS1=[\u@\h \W]\$ /usr/bin/cmake --build /home/aaron/abstain-rover/ros2_ws/build/abstain_pkg -- -j16 -l16
-Invoking command in '/home/aaron/abstain-rover/ros2_ws/build/abstain_pkg': CMAKE_PREFIX_PATH=/opt/ros/humble PS1=[\u@\h \W]\$ /usr/bin/cmake --install /home/aaron/abstain-rover/ros2_ws/build/abstain_pkg
-Invoked command in '/home/aaron/abstain-rover/ros2_ws/build/abstain_pkg' returned '0': CMAKE_PREFIX_PATH=/opt/ros/humble PS1=[\u@\h \W]\$ /usr/bin/cmake --install /home/aaron/abstain-rover/ros2_ws/build/abstain_pkg
