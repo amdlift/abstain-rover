@@ -1,90 +1,133 @@
-#include <rclcpp/rclcpp.hpp>
-#include <std_msgs/msg/float32.hpp>
+#include <chrono>
+#include <functional>
+#include <memory>
+#include <thread>
+#include <string>
+#include <iostream>
+#include <fstream>
+
+#include "rclcpp/rclcpp.hpp"
+#include "std_msgs/msg/string.hpp"
+
+// Adjust depending on your system
 #include <fcntl.h>
 #include <termios.h>
 #include <unistd.h>
-#include <string>
-#include <sstream>
-#include <mutex>
 
-class PicoServoSubscriber : public rclcpp::Node
+using namespace std::chrono_literals;
+
+class LibreNode : public rclcpp::Node
 {
 public:
-    PicoServoSubscriber(const std::string & serial_port="/dev/ttyACM0")
-    : Node("pico_servo_subscriber")
+    LibreNode(const std::string &port="/dev/ttyACM0", int baud=115200)
+    : Node("libre_node"), serial_port_(port), baud_rate_(baud)
     {
-        // Open serial port
-        fd_ = open(serial_port.c_str(), O_RDWR | O_NOCTTY | O_SYNC);
-        if (fd_ < 0) {
-            RCLCPP_ERROR(this->get_logger(), "Failed to open serial port %s", serial_port.c_str());
-        } else {
-            configure_port();
-            RCLCPP_INFO(this->get_logger(), "Serial port %s opened", serial_port.c_str());
-        }
+        // Publisher for sensor data
+        sensor_pub_ = this->create_publisher<std_msgs::msg::String>("sensor_data", 10);
 
-        // Subscribers
-        wrist_sub_ = this->create_subscription<std_msgs::msg::Float32>(
-            "servo_wrist", 10,
-            [this](std_msgs::msg::Float32::SharedPtr msg){ update_angle("W", msg->data); });
+        // Subscriber for servo commands
+        servo_sub_ = this->create_subscription<std_msgs::msg::String>(
+            "servo_cmds", 10,
+            std::bind(&LibreNode::servo_callback, this, std::placeholders::_1)
+        );
 
-        shoulder_sub_ = this->create_subscription<std_msgs::msg::Float32>(
-            "servo_shoulder", 10,
-            [this](std_msgs::msg::Float32::SharedPtr msg){ update_angle("S", msg->data); });
+        // Open serial
+        open_serial();
 
-        elbow_sub_ = this->create_subscription<std_msgs::msg::Float32>(
-            "servo_elbow", 10,
-            [this](std_msgs::msg::Float32::SharedPtr msg){ update_angle("E", msg->data); });
+        // Start thread to read sensor data from Pico
+        reader_thread_ = std::thread(&LibreNode::serial_read_loop, this);
     }
 
-    ~PicoServoSubscriber() {
-        if (fd_ >= 0) close(fd_);
+    ~LibreNode() {
+        run_reader_ = false;
+        if (reader_thread_.joinable()) reader_thread_.join();
+        close(fd_);
     }
 
 private:
-    void configure_port() {
+    void open_serial() {
+        fd_ = open(serial_port_.c_str(), O_RDWR | O_NOCTTY | O_SYNC);
+        if (fd_ < 0) {
+            RCLCPP_ERROR(this->get_logger(), "Failed to open serial port %s", serial_port_.c_str());
+            return;
+        }
+
         struct termios tty;
         tcgetattr(fd_, &tty);
         cfsetospeed(&tty, B115200);
         cfsetispeed(&tty, B115200);
+
         tty.c_cflag = (tty.c_cflag & ~CSIZE) | CS8; // 8-bit chars
-        tty.c_iflag &= ~IGNBRK; // disable break processing
-        tty.c_lflag = 0; // no signaling chars, no echo
-        tty.c_oflag = 0; // no remapping, no delays
-        tty.c_cc[VMIN]  = 0;
-        tty.c_cc[VTIME] = 5; // 0.5 seconds read timeout
-        tty.c_cflag |= (CLOCAL | CREAD); // ignore modem controls, enable reading
-        tty.c_cflag &= ~(PARENB | PARODD); // shut off parity
+        tty.c_iflag &= ~IGNBRK;                     // disable break processing
+        tty.c_lflag = 0;                            // no signaling chars, no echo
+        tty.c_oflag = 0;                            // no remapping, no delays
+        tty.c_cc[VMIN]  = 0;                        // non-blocking read
+        tty.c_cc[VTIME] = 10;                       // 1 sec read timeout
+
+        tty.c_cflag |= (CLOCAL | CREAD);
+        tty.c_cflag &= ~(PARENB | PARODD);
         tty.c_cflag &= ~CSTOPB;
         tty.c_cflag &= ~CRTSCTS;
+
         tcsetattr(fd_, TCSANOW, &tty);
+        RCLCPP_INFO(this->get_logger(), "Serial port %s opened", serial_port_.c_str());
     }
 
-    void update_angle(const std::string & servo, float value) {
-        std::lock_guard<std::mutex> lock(mutex_);
-        if (fd_ < 0) return;
-        angles_[servo] = value;
-
-        // Format string: "W:90,S:45,E:120\n"
-        std::ostringstream oss;
-        oss << "W:" << angles_["W"] << ",S:" << angles_["S"] << ",E:" << angles_["E"] << "\n";
-        std::string out = oss.str();
-        write(fd_, out.c_str(), out.size());
-        tcdrain(fd_); // make sure data is sent
+    void servo_callback(const std_msgs::msg::String::SharedPtr msg) {
+        // Forward servo command to Pico
+        std::string cmd = msg->data + "\n";
+        if (fd_ >= 0) {
+            write(fd_, cmd.c_str(), cmd.size());
+        }
+        RCLCPP_INFO(this->get_logger(), "Forwarded servo command: %s", cmd.c_str());
     }
 
-    rclcpp::Subscription<std_msgs::msg::Float32>::SharedPtr wrist_sub_;
-    rclcpp::Subscription<std_msgs::msg::Float32>::SharedPtr shoulder_sub_;
-    rclcpp::Subscription<std_msgs::msg::Float32>::SharedPtr elbow_sub_;
+    void serial_read_loop() {
+        char buf[256];
+        std::string line;
 
+        while (rclcpp::ok() && run_reader_) {
+            int n = read(fd_, buf, sizeof(buf));
+            if (n > 0) {
+                for (int i = 0; i < n; ++i) {
+                    char c = buf[i];
+                    if (c == '\n') {
+                        if (!line.empty()) {
+                            publish_sensor_line(line);
+                            line.clear();
+                        }
+                    } else {
+                        line += c;
+                    }
+                }
+            }
+            std::this_thread::sleep_for(5ms); // small sleep to reduce CPU usage
+        }
+    }
+
+    void publish_sensor_line(const std::string &line) {
+        auto msg = std_msgs::msg::String();
+        msg.data = line;
+        sensor_pub_->publish(msg);
+        RCLCPP_DEBUG(this->get_logger(), "Sensor: %s", line.c_str());
+    }
+
+    // ROS2
+    rclcpp::Publisher<std_msgs::msg::String>::SharedPtr sensor_pub_;
+    rclcpp::Subscription<std_msgs::msg::String>::SharedPtr servo_sub_;
+
+    // Serial
+    std::string serial_port_;
+    int baud_rate_;
     int fd_;
-    std::mutex mutex_;
-    std::map<std::string, float> angles_ {{"W",0.0f}, {"S",0.0f}, {"E",0.0f}};
+    std::thread reader_thread_;
+    bool run_reader_ = true;
 };
 
-int main(int argc, char * argv[])
+int main(int argc, char **argv)
 {
     rclcpp::init(argc, argv);
-    auto node = std::make_shared<PicoServoSubscriber>("/dev/ttyACM0");
+    auto node = std::make_shared<LibreNode>("/dev/ttyACM0");
     rclcpp::spin(node);
     rclcpp::shutdown();
     return 0;
