@@ -23,9 +23,9 @@ public:
         }
 
         // Subscribers
-        base_sub_ = this->create_subscription<std_msgs::msg::Float32>(
-            "servo_base", 10,
-            [this](std_msgs::msg::Float32::SharedPtr msg){ update_angle("B", msg->data); });
+        wrist_sub_ = this->create_subscription<std_msgs::msg::Float32>(
+            "servo_wrist", 10,
+            [this](std_msgs::msg::Float32::SharedPtr msg){ update_angle("W", msg->data); });
 
         shoulder_sub_ = this->create_subscription<std_msgs::msg::Float32>(
             "servo_shoulder", 10,
@@ -64,21 +64,21 @@ private:
         if (fd_ < 0) return;
         angles_[servo] = value;
 
-        // Format string: "B:90,S:45,E:120\n"
+        // Format string: "W:90,S:45,E:120\n"
         std::ostringstream oss;
-        oss << "B:" << angles_["B"] << ",S:" << angles_["S"] << ",E:" << angles_["E"] << "\n";
+        oss << "W:" << angles_["W"] << ",S:" << angles_["S"] << ",E:" << angles_["E"] << "\n";
         std::string out = oss.str();
         write(fd_, out.c_str(), out.size());
         tcdrain(fd_); // make sure data is sent
     }
 
-    rclcpp::Subscription<std_msgs::msg::Float32>::SharedPtr base_sub_;
+    rclcpp::Subscription<std_msgs::msg::Float32>::SharedPtr wrist_sub_;
     rclcpp::Subscription<std_msgs::msg::Float32>::SharedPtr shoulder_sub_;
     rclcpp::Subscription<std_msgs::msg::Float32>::SharedPtr elbow_sub_;
 
     int fd_;
     std::mutex mutex_;
-    std::map<std::string, float> angles_ {{"B",0.0f}, {"S",0.0f}, {"E",0.0f}};
+    std::map<std::string, float> angles_ {{"W",0.0f}, {"S",0.0f}, {"E",0.0f}};
 };
 
 int main(int argc, char * argv[])
