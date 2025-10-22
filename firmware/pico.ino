@@ -10,7 +10,11 @@
 
 // Sensor objects
 Adafruit_BMP3XX bmp;
-Adafruit_BNO055 bno = Adafruit_BNO055(55, 0x28, &Wire);
+Adafruit_BNO055 bno = Adafruit_BNO055(55, 0x28, &Wire1);
+
+// Set UART pins for OpenLog
+const int dataRX = 5;
+const int dataTX = 4;
 
 // Servo objects
 Servo wristServo;
@@ -26,18 +30,24 @@ const int elbowPin = 18;
 String inputString = "";
 bool stringComplete = false;
 
+
 void setup() {
   Serial.begin(115200); // Use Serial for RP2040 USB UART, or Serial for default
+  Serial2.setRX(dataRX);
+  Serial2.setTX(dataTX);
+  Serial2.begin(9600);
   inputString.reserve(100);
+
+  Wire1.setSCL(3);
+  Wire1.setSDA(2);
 
   if (!bno.begin())
   {
     Serial.print("BNO not detected");
-    while (1);
+
   }
-  if (! bmp.begin_I2C()) {  
+  if (! bmp.begin_I2C(0x77, &Wire1)) {  
     Serial.println("BMP not detected");
-    while (1);
   }
 
 
@@ -88,6 +98,16 @@ void loop() {
     Serial.print(temperature, 2); Serial.print(",");
     Serial.print(pressure, 2); Serial.print(",");
     Serial.println(altitude, 2);
+
+    Serial2.print("ACC:");
+    Serial2.print(accelEvent.acceleration.x, 2); Serial2.print(",");
+    Serial2.print(accelEvent.acceleration.y, 2); Serial2.print(",");
+    Serial2.print(accelEvent.acceleration.z, 2);
+
+    Serial2.print(";BMP:");
+    Serial2.print(temperature, 2); Serial2.print(",");
+    Serial2.print(pressure, 2); Serial2.print(",");
+    Serial2.println(altitude, 2);
   }
 
 }
