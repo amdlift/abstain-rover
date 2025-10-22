@@ -25,6 +25,7 @@ setup(
     entry_points={
         'console_scripts': [
             'keyboard_node = py_abstain_pkg.keyboard_node:main',
+            'base_station = py_abstain_pkg.base_station:main'
         ],
     },
 )
