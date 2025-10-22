@@ -31,6 +31,16 @@ public:
             std::bind(&LibreNode::servo_callback, this, std::placeholders::_1)
         );
 
+        motor_axis_sub_ = this->create_subscription<std_msgs::msg::String>(
+            "motor_axis", 10,
+            std::bind(&LibreNode::motor_axis_callback, this, std::placeholders::_1)
+        );
+
+        motor_claw_sub_ = this->create_subscription<std_msgs::msg::String>(
+            "motor_claw", 10,
+            std::bind(&LibreNode::motor_claw_callback, this, std::placeholders::_1)
+        );
+
         // Open serial
         open_serial();
 
@@ -82,6 +92,25 @@ private:
         RCLCPP_INFO(this->get_logger(), "Forwarded servo command: %s", cmd.c_str());
     }
 
+    void motor_axis_callback(const std_msgs::msg::String::SharedPtr msg)
+    {
+        std::string cmd = "AXIS:" + msg->data + "\n";
+        if (fd_ >= 0) {
+            write(fd_, cmd.c_str(), cmd.size());
+        }
+        RCLCPP_INFO(this->get_logger(), "Forwarded motor axis command: %s", cmd.c_str());
+    }
+
+    void motor_claw_callback(const std_msgs::msg::String::SharedPtr msg)
+    {
+        std::string cmd = "CLAW:" + msg->data + "\n";
+        if (fd_ >= 0) {
+            write(fd_, cmd.c_str(), cmd.size());
+        }
+        RCLCPP_INFO(this->get_logger(), "Forwarded motor claw command: %s", cmd.c_str());
+    }
+
+
     void serial_read_loop() {
         char buf[256];
         std::string line;
@@ -115,6 +144,9 @@ private:
     // ROS2
     rclcpp::Publisher<std_msgs::msg::String>::SharedPtr sensor_pub_;
     rclcpp::Subscription<std_msgs::msg::String>::SharedPtr servo_sub_;
+    rclcpp::Subscription<std_msgs::msg::String>::SharedPtr motor_axis_sub_;
+    rclcpp::Subscription<std_msgs::msg::String>::SharedPtr motor_claw_sub_;
+
 
     // Serial
     std::string serial_port_;

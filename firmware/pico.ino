@@ -26,6 +26,14 @@ const int wristPin = 16;
 const int shoulderPin = 17;
 const int elbowPin = 18;
 
+// DC Motor pins
+const int AIN1 = 11;
+const int AIN2 = 10;
+const int PWMA = 9;
+const int BIN1 = 13;
+const int BIN2 = 14;
+const int PWMB = 15;
+
 // Buffer for incoming serial data
 String inputString = "";
 bool stringComplete = false;
@@ -57,6 +65,18 @@ void setup() {
   elbowServo.attach(elbowPin, 500, 2500);
 
   Serial.println("Servos ready");
+
+  // Motor setup
+  pinMode(AIN1, OUTPUT);
+  pinMode(AIN2, OUTPUT);
+  pinMode(PWMA, OUTPUT);
+  pinMode(BIN1, OUTPUT);
+  pinMode(BIN2, OUTPUT);
+  pinMode(PWMB, OUTPUT);
+  
+  // stopMotors();
+
+  Serial.println("Motors ready");
 }
 
 void loop() {
@@ -72,7 +92,7 @@ void loop() {
 
   // If a full line received, parse and update servos
   if (stringComplete) {
-    parseAndMoveServos(inputString);
+    parseAndMoveServosMotors(inputString);
     inputString = "";
     stringComplete = false;
   }
@@ -112,87 +132,63 @@ void loop() {
 
 }
 
-void parseAndMoveServos(String data) {
-  // Expected format: "B:90,S:45,E:120"
+// ====== Motor Control Helpers ======
+void stopMotors() {
+  analogWrite(PWMA, 0);
+  analogWrite(PWMB, 0);
+  digitalWrite(AIN1, LOW);
+  digitalWrite(AIN2, LOW);
+  digitalWrite(BIN1, LOW);
+  digitalWrite(BIN2, LOW);
+}
+
+void setMotor(int in1, int in2, int pwm, float speed) {
+  speed = constrain(speed, -255, 255);
+  if (speed > 0) {
+    digitalWrite(in1, HIGH);
+    digitalWrite(in2, LOW);
+    analogWrite(pwm, speed);
+  } else if (speed < 0) {
+    digitalWrite(in1, LOW);
+    digitalWrite(in2, HIGH);
+    analogWrite(pwm, -speed);
+  } else {
+    digitalWrite(in1, LOW);
+    digitalWrite(in2, LOW);
+    analogWrite(pwm, 0);
+  }
+}
+
+// ====== Command Parser ======
+void parseAndMoveServosMotors(String data) {
+  // Example: "W:90,S:45,E:120,A:100,C:-80"
   int wIndex = data.indexOf("W:");
   int sIndex = data.indexOf("S:");
   int eIndex = data.indexOf("E:");
+  int aIndex = data.indexOf("A:");
+  int cIndex = data.indexOf("C:");
 
-  if (wIndex == -1 || sIndex == -1 || eIndex == -1) return;
+  float wAngle = (wIndex != -1) ? data.substring(wIndex + 2, nextComma(data, wIndex)).toFloat() : -1;
+  float sAngle = (sIndex != -1) ? data.substring(sIndex + 2, nextComma(data, sIndex)).toFloat() : -1;
+  float eAngle = (eIndex != -1) ? data.substring(eIndex + 2, nextComma(data, eIndex)).toFloat() : -1;
+  float aSpeed = (aIndex != -1) ? data.substring(aIndex + 2, nextComma(data, aIndex)).toFloat() : 0;
+  float cSpeed = (cIndex != -1) ? data.substring(cIndex + 2).toFloat() : 0;
 
-  float wAngle = data.substring(wIndex + 2, sIndex - 1).toFloat();
-  float sAngle = data.substring(sIndex + 2, eIndex - 1).toFloat();
-  float eAngle = data.substring(eIndex + 2).toFloat();
+  if (wAngle >= 0) wristServo.write(constrain(wAngle, 0, 180));
+  if (sAngle >= 0) shoulderServo.write(constrain(sAngle, 0, 180));
+  if (eAngle >= 0) elbowServo.write(constrain(eAngle, 0, 180));
 
-  // Constrain angles to 0-180
-  wAngle = constrain(wAngle, 0, 180);
-  sAngle = constrain(sAngle, 0, 180);
-  eAngle = constrain(eAngle, 0, 180);
+  setMotor(AIN1, AIN2, PWMA, aSpeed);
+  setMotor(BIN1, BIN2, PWMB, cSpeed);
 
-  // Move servos
-  wristServo.write(wAngle);
-  shoulderServo.write(sAngle);
-  elbowServo.write(eAngle);
-
-  // Optional debug
-  Serial.print("Moved servos: ");
-  Serial.print(wAngle); Serial.print(",");
-  Serial.print(sAngle); Serial.print(",");
-  Serial.println(eAngle);
+  Serial.print("Cmd -> W:"); Serial.print(wAngle);
+  Serial.print(" S:"); Serial.print(sAngle);
+  Serial.print(" E:"); Serial.print(eAngle);
+  Serial.print(" A:"); Serial.print(aSpeed);
+  Serial.print(" C:"); Serial.println(cSpeed);
 }
 
-void printEvent(sensors_event_t* event) {
-  double x = -1000000, y = -1000000 , z = -1000000; //dumb values, easy to spot problem
-  if (event->type == SENSOR_TYPE_ACCELEROMETER) {
-    Serial.print("Accl:");
-    x = event->acceleration.x;
-    y = event->acceleration.y;
-    z = event->acceleration.z;
-  }
-  else if (event->type == SENSOR_TYPE_ORIENTATION) {
-    Serial.print("Orient:");
-    x = event->orientation.x;
-    y = event->orientation.y;
-    z = event->orientation.z;
-  }
-  else if (event->type == SENSOR_TYPE_MAGNETIC_FIELD) {
-    Serial.print("Mag:");
-    x = event->magnetic.x;
-    y = event->magnetic.y;
-    z = event->magnetic.z;
-  }
-  else if (event->type == SENSOR_TYPE_GYROSCOPE) {
-    Serial.print("Gyro:");
-    x = event->gyro.x;
-    y = event->gyro.y;
-    z = event->gyro.z;
-  }
-  else if (event->type == SENSOR_TYPE_ROTATION_VECTOR) {
-    Serial.print("Rot:");
-    x = event->gyro.x;
-    y = event->gyro.y;
-    z = event->gyro.z;
-  }
-  else if (event->type == SENSOR_TYPE_LINEAR_ACCELERATION) {
-    Serial.print("Linear:");
-    x = event->acceleration.x;
-    y = event->acceleration.y;
-    z = event->acceleration.z;
-  }
-  else if (event->type == SENSOR_TYPE_GRAVITY) {
-    Serial.print("Gravity:");
-    x = event->acceleration.x;
-    y = event->acceleration.y;
-    z = event->acceleration.z;
-  }
-  else {
-    Serial.print("Unk:");
-  }
-
-  Serial.print("\tx= ");
-  Serial.print(x);
-  Serial.print(" |\ty= ");
-  Serial.print(y);
-  Serial.print(" |\tz= ");
-  Serial.println(z);
+int nextComma(String s, int start) {
+  int idx = s.indexOf(",", start);
+  return (idx == -1) ? s.length() : idx;
 }
