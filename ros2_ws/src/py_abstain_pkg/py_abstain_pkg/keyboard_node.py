@@ -13,7 +13,7 @@ class ArmKeyboardController(Node):
         self.elbow_pub = self.create_publisher(Float32, 'servo_elbow', 10)
         self.wrist_pub = self.create_publisher(Float32, 'servo_wrist', 10)
         self.axis_pub = self.create_publisher(Float32, 'motor_axis', 10)
-        self.claw_pub = self.create_publisher(Float32, 'motor_claw', 10)
+        self.claw_pub = self.create_publisher(Float32, 'servo_claw', 10)
 
         # --- Pygame Setup ---
         pygame.init()
@@ -24,10 +24,10 @@ class ArmKeyboardController(Node):
         self.shoulder_angle = 135.0   # Center position for 270° servo
         self.elbow_angle = 90.0       # Neutral
         self.wrist_angle = 90.0       # Neutral
+        self.claw_angle = 90.0
 
         # --- Motor Speeds ---
         self.axis_speed = 0.0
-        self.claw_speed = 0.0
 
         # --- Movement Step Sizes ---
         self.step = 1.0           # degrees per tick for manual servo control
@@ -76,10 +76,16 @@ class ArmKeyboardController(Node):
         elif keys[pygame.K_f]:
             self.wrist_angle -= self.step
 
+        if keys[pygame.K_UP]:
+            self.claw_angle += self.step
+        elif keys[pygame.K_DOWN]:
+            self.claw_angle -= self.step
+
         # Clamp angles
         self.shoulder_angle = max(0.0, min(270.0, self.shoulder_angle))
         self.elbow_angle = max(0.0, min(180.0, self.elbow_angle))
         self.wrist_angle = max(0.0, min(180.0, self.wrist_angle))
+        self.claw_angle = max(0.0, min(180.0, self.claw_angle))
 
         # ---------------------------
         # INVERSE KINEMATICS CONTROL (I/J/K/L)
@@ -126,12 +132,12 @@ class ArmKeyboardController(Node):
         else:
             self.axis_speed = 0.0
 
-        if keys[pygame.K_UP]:
-            self.claw_speed = 150.0
-        elif keys[pygame.K_DOWN]:
-            self.claw_speed = -150.0
-        else:
-            self.claw_speed = 0.0
+        #if keys[pygame.K_UP]:
+        #    self.claw_speed = 150.0
+        #elif keys[pygame.K_DOWN]:
+        #    self.claw_speed = -150.0
+        #else:
+        #    self.claw_speed = 0.0
 
         # ---------------------------
         # PUBLISH COMMANDS
@@ -140,7 +146,7 @@ class ArmKeyboardController(Node):
         self.elbow_pub.publish(Float32(data=self.elbow_angle))
         self.wrist_pub.publish(Float32(data=self.wrist_angle))
         self.axis_pub.publish(Float32(data=self.axis_speed))
-        self.claw_pub.publish(Float32(data=self.claw_speed))
+        self.claw_pub.publish(Float32(data=self.claw_angle))
 
         # Update Cartesian position from FK for display/log
         self.x, self.y = self.forward_kinematics(
@@ -151,7 +157,7 @@ class ArmKeyboardController(Node):
         self.get_logger().info(
             f"X:{self.x:.1f} Y:{self.y:.1f} | "
             f"S:{self.shoulder_angle:.1f}° E:{self.elbow_angle:.1f}° W:{self.wrist_angle:.1f}° | "
-            f"A:{self.axis_speed:.0f} C:{self.claw_speed:.0f}"
+            f"A:{self.axis_speed:.0f} C:{self.claw_angle:.0f}° C"
         )
 
     # -------------------------------------------------------------

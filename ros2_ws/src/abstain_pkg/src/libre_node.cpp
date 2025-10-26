@@ -42,7 +42,7 @@ public:
             [this](std_msgs::msg::Float32::SharedPtr msg){ update_value("A", msg->data); });
 
         claw_sub_ = this->create_subscription<std_msgs::msg::Float32>(
-            "motor_claw", 10,
+            "servo_claw", 10,
             [this](std_msgs::msg::Float32::SharedPtr msg){ update_value("C", msg->data); });
     }
 
